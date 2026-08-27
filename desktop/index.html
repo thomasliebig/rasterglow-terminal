@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RasterGlow Terminal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="monitor">
+    <div id="drag-region"></div>
+    <section id="screenfx">
+      <canvas id="phosphor"></canvas>
+      <div id="scanlines"></div>
+    </section>
+    <img id="bezel" src="assets/crt-monitor-frame.png" alt="">
+    <aside id="controls" title="F2 blendet die CRT-Regler ein/aus">
+      <div class="control"><div class="knob" data-key="hSize" data-min="82" data-max="104"></div><span>H SIZE</span></div>
+      <div class="control"><div class="knob" data-key="vSize" data-min="76" data-max="102"></div><span>V SIZE</span></div>
+      <div class="control"><div class="knob" data-key="xPos" data-min="-6" data-max="6"></div><span>H POS</span></div>
+      <div class="control"><div class="knob" data-key="yPos" data-min="-6" data-max="6"></div><span>V POS</span></div>
+      <div class="control"><div class="knob" data-key="curve" data-min="3" data-max="16"></div><span>CURVE</span></div>
+      <div class="control"><div class="knob" data-key="brightness" data-min="0.5" data-max="2.5"></div><span>BRIGHT</span></div>
+      <div class="control"><div class="knob" data-key="contrast" data-min="0.6" data-max="2.2"></div><span>CONTRAST</span></div>
+      <div class="control"><div class="knob" data-key="focus" data-min="0.2" data-max="1"></div><span>FOCUS</span></div>
+      <div class="control"><div class="knob" data-key="glow" data-min="0" data-max="1.8"></div><span>GLOW</span></div>
+      <div class="control"><div class="knob" data-key="flicker" data-min="0" data-max="3.0"></div><span>FLICKER</span></div>
+    </aside>
+    <div id="status">AFTERGLOW 1.8s · F2 CRT SETUP · Ctrl+Shift+V PASTE</div>
+  </main>
+  <script src="renderer.js"></script>
+</body>
+</html>
