@@ -9,6 +9,8 @@
 
 [Try the web demo](https://thomasliebig.github.io/rasterglow-terminal/) · [Download the portable Windows EXE](https://github.com/thomasliebig/rasterglow-terminal/releases/latest) · [Embed it in Vue](#use-in-a-vue-3-project)
 
+[![RasterGlow Terminal running as a Windows and web CRT terminal](docs/rasterglow-terminal-web-demo.png)](https://thomasliebig.github.io/rasterglow-terminal/)
+
 RasterGlow combines an actual Windows terminal emulator with a reusable browser renderer. It supports ANSI/VT sequences, Unicode, terminal mouse input and interactive applications while reproducing curved scanlines, flicker, glow and **pixel-level phosphor persistence** on the GPU.
 
 > The portable application is not an installer: download one EXE and run it. The browser component only renders and handles terminal I/O; connect it to a PTY/WebSocket backend when you need a real remote shell.
