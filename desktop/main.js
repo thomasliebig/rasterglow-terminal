@@ -22,10 +22,7 @@ function createShell(cols, rows) {
         COLUMNS: String(cols),
         LINES: String(rows)
       },
-      // WinPTY translates SGR mouse packets into native INPUT_RECORDs. This
-      // keeps modern VT applications working and also supports classic Win32
-      // console applications such as TurboIDE (including wheel events).
-      useConpty: false
+      useConpty: true
     }
   );
   shell.onData(data => {
