@@ -1,6 +1,6 @@
 {
   "name": "rasterglow-terminal-windows",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "RasterGlow Terminal for Windows with ConPTY and real phosphor persistence",
   "main": "main.js",
@@ -26,10 +26,23 @@
     "asar": false,
     "npmRebuild": false,
     "files": [
-      "main.js", "renderer.js", "index.html", "style.css", "retro-profile.ps1",
-      "assets/**/*", "fonts/**/*", "package.json"
+      "main.js",
+      "renderer.js",
+      "index.html",
+      "style.css",
+      "retro-profile.ps1",
+      "assets/**/*",
+      "fonts/**/*",
+      "package.json"
     ],
-    "win": { "target": ["portable"], "signAndEditExecutable": false },
-    "portable": { "artifactName": "RasterGlow-Terminal-Windows-x64-Portable-v${version}.${ext}" }
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "RasterGlow-Terminal-Windows-x64-Portable-v${version}.${ext}"
+    }
   }
 }
