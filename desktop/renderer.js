@@ -693,7 +693,22 @@ screen.addEventListener('contextmenu', event => {
 
 const pressedKeys = new Set();
 const interceptedKeyUps = new Set();
+function resetKeyboardState() {
+  pressedKeys.clear();
+  interceptedKeyUps.clear();
+}
+
+function reconcileModifierState(event) {
+  // Browsers do not dispatch keyup when focus is lost while a modifier is
+  // held. Remove those stale keys before encoding the next Win32 record.
+  if (!event.shiftKey) { pressedKeys.delete('ShiftLeft'); pressedKeys.delete('ShiftRight'); }
+  if (!event.ctrlKey) { pressedKeys.delete('ControlLeft'); pressedKeys.delete('ControlRight'); }
+  if (!event.altKey) { pressedKeys.delete('AltLeft'); pressedKeys.delete('AltRight'); }
+  if (!event.metaKey) { pressedKeys.delete('MetaLeft'); pressedKeys.delete('MetaRight'); }
+}
+
 window.addEventListener('keydown', event => {
+  reconcileModifierState(event);
   if (event.ctrlKey && event.shiftKey && event.key === 'F2') {
     interceptedKeyUps.add(event.code);
     document.getElementById('controls').classList.toggle('hidden');
@@ -755,7 +770,7 @@ window.addEventListener('keydown', event => {
     term.scrollToBottom();
     window.retroTerminal.input(event.key); event.preventDefault();
   }
-});
+}, true);
 
 window.addEventListener('keyup', event => {
   if (interceptedKeyUps.delete(event.code)) { event.preventDefault(); return; }
@@ -764,6 +779,16 @@ window.addEventListener('keyup', event => {
   const locks = { num: event.getModifierState('NumLock'), scroll: event.getModifierState('ScrollLock'), caps: event.getModifierState('CapsLock'), pressed: pressedKeys };
   window.retroTerminal.input(win32KeySequence(event, false, locks));
   event.preventDefault();
+}, true);
+
+window.addEventListener('blur', resetKeyboardState);
+window.addEventListener('focus', resetKeyboardState);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) resetKeyboardState();
+});
+ipcRenderer.on('terminal:resume', () => {
+  resetKeyboardState();
+  term.scrollToBottom();
 });
 
 window.addEventListener('resize', resize);

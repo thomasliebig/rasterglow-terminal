@@ -1,6 +1,6 @@
 {
   "name": "rasterglow-terminal-windows",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "description": "RasterGlow Terminal for Windows with bundled OpenConsole, mouse input and real phosphor persistence",
   "main": "main.js",

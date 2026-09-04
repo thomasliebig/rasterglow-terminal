@@ -1,12 +1,14 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, powerMonitor } = require('electron');
 const path = require('path');
 const pty = require('node-pty');
 
 let win;
 let shell;
+let terminalSize = { cols: 120, rows: 36 };
 
 function createShell(cols, rows) {
   if (shell) return;
+  terminalSize = { cols, rows };
   shell = pty.spawn(
     'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe',
     ['-NoLogo', '-NoExit', '-File', path.join(__dirname, 'retro-profile.ps1')],
@@ -18,7 +20,7 @@ function createShell(cols, rows) {
         TERM: 'xterm-256color',
         COLORTERM: 'truecolor',
         TERM_PROGRAM: 'RasterGlowTerminal',
-        TERM_PROGRAM_VERSION: '1.0.3',
+        TERM_PROGRAM_VERSION: '1.0.4',
         COLUMNS: String(cols),
         LINES: String(rows)
       },
@@ -57,6 +59,7 @@ function createWindow() {
   win.webContents.on('did-fail-load', (_event, code, description) => console.error('Load failed:', code, description));
 
   win.loadFile('index.html');
+  win.on('focus', () => win?.webContents.send('terminal:resume'));
 
 }
 
@@ -64,11 +67,30 @@ ipcMain.on('terminal:input', (_event, data) => shell?.write(data));
 ipcMain.on('window:fullscreen', () => win?.setFullScreen(!win.isFullScreen()));
 ipcMain.on('terminal:resize', (_event, { cols, rows }) => {
   if (cols <= 1 || rows <= 1) return;
+  terminalSize = { cols, rows };
   if (!shell) createShell(cols, rows);
   else shell.resize(cols, rows);
 });
 
-app.whenReady().then(createWindow);
+function resumeTerminalInput() {
+  if (shell) {
+    // Force OpenConsole to refresh its input/output pipes and dimensions after
+    // Windows sleep or workstation unlock without discarding the session.
+    const nudgeCols = Math.max(2, terminalSize.cols - 1);
+    shell.resize(nudgeCols, terminalSize.rows);
+    shell.resize(terminalSize.cols, terminalSize.rows);
+  }
+  if (win && !win.isDestroyed()) {
+    win.webContents.send('terminal:resume');
+    if (win.isFocused()) win.webContents.focus();
+  }
+}
+
+app.whenReady().then(() => {
+  createWindow();
+  powerMonitor.on('resume', resumeTerminalInput);
+  powerMonitor.on('unlock-screen', resumeTerminalInput);
+});
 app.on('window-all-closed', () => {
   shell?.kill();
   app.quit();

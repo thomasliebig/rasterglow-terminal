@@ -33,7 +33,7 @@ The original desktop work was inspired by [cool-retro-term](https://github.com/S
 ## Windows: download and run
 
 1. Open the [latest release](https://github.com/thomasliebig/rasterglow-terminal/releases/latest).
-2. Download `RasterGlow-Terminal-Windows-x64-Portable-v1.0.3.exe`.
+2. Download `RasterGlow-Terminal-Windows-x64-Portable-v1.0.4.exe`.
 3. Run it directly. No installation is required.
 
 PowerShell, SSH, Vim, GNU Screen, Midnight Commander, Node/React TUIs and native Win32/Win64 console applications run inside the terminal. Press `Ctrl+Shift+F2` to show the CRT controls; unmodified F-keys are forwarded to the application.
