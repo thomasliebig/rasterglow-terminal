@@ -1,0 +1,11 @@
+const assert=require('assert');
+const p=require('../input-protocol');
+const base={key:'F1',code:'F1',ctrlKey:false,altKey:false,shiftKey:false,metaKey:false};
+assert.equal(p.win32KeySequence(base,true,{}),'\x1b[112;59;0;1;0;1_');
+assert.deepEqual(p.keyIdentity('F12'),[123,88]);
+assert.equal(p.win32KeySequence({...base,ctrlKey:true},true,{pressed:new Set(['ControlLeft'])}),'\x1b[112;59;0;1;8;1_');
+assert.equal(p.sgrMouseSequence({button:0,action:1,col:17,row:9}),'\x1b[<0;18;10M');
+assert.equal(p.sgrMouseSequence({button:0,action:0,col:17,row:9}),'\x1b[<0;18;10m');
+assert.equal(p.sgrMouseSequence({button:4,action:0,col:17,row:9}),'\x1b[<64;18;10M');
+assert.equal(p.sgrMouseSequence({button:4,action:1,col:17,row:9}),'\x1b[<65;18;10M');
+console.log('PASS input protocol');

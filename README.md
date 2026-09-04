@@ -19,10 +19,11 @@ RasterGlow combines an actual Windows terminal emulator with a reusable browser 
 
 | Capability | Windows portable | Web / Vue 3 |
 | --- | :---: | :---: |
-| Real terminal session | ConPTY + PowerShell | Connect your own PTY backend |
+| Real terminal session | Bundled OpenConsole/ConPTY + PowerShell | Connect your own PTY backend |
 | ANSI, 256 colors and truecolor | ✓ | ✓ |
 | Unicode and box-drawing glyphs | ✓ | ✓ |
 | Keyboard and SGR mouse input | ✓ | ✓ |
+| Native Win32/Win64 F-key and mouse records | ✓ | — |
 | WebGL CRT curvature and curved scanlines | ✓ | ✓ |
 | Pixel-level phosphor afterglow | ✓ | ✓ |
 | Installation required | No | No |
@@ -32,10 +33,10 @@ The original desktop work was inspired by [cool-retro-term](https://github.com/S
 ## Windows: download and run
 
 1. Open the [latest release](https://github.com/thomasliebig/rasterglow-terminal/releases/latest).
-2. Download `RasterGlow-Terminal-Windows-x64-Portable-v1.0.0.exe`.
+2. Download `RasterGlow-Terminal-Windows-x64-Portable-v1.0.2.exe`.
 3. Run it directly. No installation is required.
 
-PowerShell, SSH, Vim, GNU Screen, Midnight Commander and full-screen TUI applications run inside the terminal. Press `F2` to show the CRT controls.
+PowerShell, SSH, Vim, GNU Screen, Midnight Commander, Node/React TUIs and native Win32/Win64 console applications run inside the terminal. Press `Ctrl+Shift+F2` to show the CRT controls; unmodified F-keys are forwarded to the application.
 
 ## Use in a Vue 3 project
 
@@ -74,11 +75,11 @@ The component emits terminal input; it never exposes a browser user's local shel
 
 ## Features
 
-- Portable Windows x64 terminal powered by Electron and ConPTY
+- Portable Windows x64 terminal powered by Electron and a bundled modern OpenConsole/ConPTY backend
 - Reusable Vue 3 terminal component and standalone WebGL renderer
 - ANSI/VT parsing, 16/256 colors and 24-bit truecolor mapped to readable monochrome phosphor levels
 - Unicode monospace rendering, box drawing, Braille and wide-character handling
-- SGR mouse reporting, keyboard input, alternate screen, cursor styles, blink and text attributes
+- Native Windows and SGR mouse reporting (click, drag and wheel), Win32 input mode with F1–F24 key-down/up events, alternate screen, cursor styles, blink and text attributes
 - Curved CRT geometry, scanlines, bloom, focus, brightness, contrast, noise and horizontal flicker
 - Efficient GPU-based, per-pixel phosphor persistence rather than line-based trails
 - Responsive character grid with exact column/row reporting
@@ -115,7 +116,7 @@ Yes. The Vue component handles rendering and input. Connect it to a server-side 
 
 ### Does it support SSH, Vim, Screen, Midnight Commander and mouse input?
 
-The Windows build supports interactive terminal applications, alternate-screen mode, terminal capabilities and SGR mouse packets. Compatibility reports are welcome because terminal applications exercise different VT behavior.
+The Windows build supports interactive terminal applications, alternate-screen mode, SGR mouse packets and native Windows mouse records. Its bundled OpenConsole backend translates clicks, dragging and wheel input for Win32/Win64 console applications and preserves complete function-key records.
 
 ### Why is the display monochrome green if applications output colors?
 

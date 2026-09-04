@@ -1,5 +1,6 @@
 const { Terminal } = require('@xterm/headless');
 const { ipcRenderer } = require('electron');
+const { win32KeySequence, sgrMouseSequence } = require('./input-protocol');
 window.addEventListener('error', event => console.error('UNCAUGHT', event.error?.stack || event.message));
 
 window.retroTerminal = {
@@ -134,7 +135,7 @@ term.onScroll(() => { lastScrollAt = performance.now(); });
 
 function updateStatus() {
   const suffix = mouseDiagnostic ? ` · ${mouseDiagnostic}` : '';
-  document.getElementById('status').textContent = `${cols} × ${rows} ZEICHEN · F2 CRT SETUP${suffix}`;
+  document.getElementById('status').textContent = `${cols} × ${rows} ZEICHEN · CTRL+SHIFT+F2 CRT SETUP${suffix}`;
 }
 
 function compileShader(type, source) {
@@ -497,7 +498,7 @@ function animate(now) {
   requestAnimationFrame(animate);
 }
 
-const mouseMode = { tracking: 'none', sgr: false, tail: '' };
+const mouseMode = { tracking: 'none', sgr: false, win32Input: false, tail: '' };
 
 function hexText(text) {
   return [...new TextEncoder().encode(text)].map(value => value.toString(16).padStart(2, '0')).join('');
@@ -589,17 +590,21 @@ function observeTerminalModes(data) {
     mouseDiagnostic = '';
     updateStatus();
   }
-  const re = /\x1b\[\?(1000|1002|1003|1006)([hl])/g;
+  const re = /\x1b\[\?([0-9;]+)([hl])/g;
   let match;
   while ((match = re.exec(probe))) {
     const enabled = match[2] === 'h';
-    if (match[1] === '1006') mouseMode.sgr = enabled;
-    else if (enabled) mouseMode.tracking = match[1];
-    else if (mouseMode.tracking === match[1]) mouseMode.tracking = 'none';
-    mouseDiagnostic = enabled ? `MAUS ${match[1]} AKTIV` : '';
+    for (const mode of match[1].split(';')) {
+      if (mode === '9001') mouseMode.win32Input = enabled;
+      else if (mode === '1006') mouseMode.sgr = enabled;
+      else if (['1000','1002','1003'].includes(mode) && enabled) mouseMode.tracking = mode;
+      else if (mouseMode.tracking === mode) mouseMode.tracking = 'none';
+    }
+    if (match[1].split(';').some(mode => ['1000','1002','1003','1006'].includes(mode)))
+      mouseDiagnostic = enabled ? `MAUS ${match[1]} AKTIV` : '';
     updateStatus();
   }
-  mouseMode.tail = probe.slice(-24);
+  mouseMode.tail = probe.slice(-64);
 }
 
 window.retroTerminal.onData(data => {
@@ -635,23 +640,16 @@ function terminalMouseCell(event) {
 
 let pressedMouseButton = -1;
 function sendMouse(event, button, action) {
-  const service = term._core?.coreMouseService;
   const cell = terminalMouseCell(event);
-  let sent = false;
-  if (service?.areMouseEventsActive) sent = service.triggerMouseEvent({
-    col: cell.col, row: cell.row, x: cell.x, y: cell.y,
-    button, action,
-    ctrl: event.ctrlKey, alt: event.altKey, shift: event.shiftKey
+  const tracking = forcedMouseCapture ? '1003' : mouseMode.tracking;
+  const isMove = action === 32;
+  if (tracking === 'none' || (isMove && tracking === '1000') || (isMove && tracking === '1002' && pressedMouseButton < 0)) return false;
+  const packet = sgrMouseSequence({
+    button, action, col: cell.col, row: cell.row,
+    shiftKey: event.shiftKey, altKey: event.altKey, ctrlKey: event.ctrlKey
   });
-  else if (forcedMouseCapture) {
-    const modifiers = (event.shiftKey ? 4 : 0) + (event.altKey ? 8 : 0) + (event.ctrlKey ? 16 : 0);
-    let code;
-    if (button === 4) code = 64 + action;
-    else code = button + (action === 32 ? 32 : 0);
-    const final = action === 0 && button !== 4 ? 'm' : 'M';
-    window.retroTerminal.input(`\x1b[<${code + modifiers};${cell.col + 1};${cell.row + 1}${final}`);
-    sent = true;
-  }
+  window.retroTerminal.input(packet);
+  const sent = true;
   if (sent) {
     const names = action === 32 ? 'MOVE' : button === 4 ? (action === 0 ? 'RAD↑' : 'RAD↓') : action === 0 ? 'UP' : 'DOWN';
     mouseDiagnostic = `MAUS ${names} C${cell.col + 1} R${cell.row + 1}`;
@@ -690,27 +688,40 @@ screen.addEventListener('wheel', event => {
   if (sendMouse(event, 4, event.deltaY < 0 ? 0 : 1)) event.preventDefault();
 }, { passive: false });
 screen.addEventListener('contextmenu', event => {
-  if (term._core?.coreMouseService?.areMouseEventsActive || forcedMouseCapture) event.preventDefault();
+  if (mouseMode.tracking !== 'none' || forcedMouseCapture) event.preventDefault();
 });
 
+const pressedKeys = new Set();
+const interceptedKeyUps = new Set();
 window.addEventListener('keydown', event => {
-  if (event.key === 'F2') {
+  if (event.ctrlKey && event.shiftKey && event.key === 'F2') {
+    interceptedKeyUps.add(event.code);
     document.getElementById('controls').classList.toggle('hidden');
     event.preventDefault(); return;
   }
-  if (event.key === 'F3') {
+  if (event.ctrlKey && event.shiftKey && event.key === 'F3') {
+    interceptedKeyUps.add(event.code);
     forcedMouseCapture = !forcedMouseCapture;
     mouseDiagnostic = forcedMouseCapture ? 'MAUS SGR MANUELL' : '';
     updateStatus();
     event.preventDefault(); return;
   }
-  if (event.key === 'F11') {
+  if (event.ctrlKey && event.shiftKey && event.key === 'F11') {
+    interceptedKeyUps.add(event.code);
     ipcRenderer.send('window:fullscreen');
     event.preventDefault(); return;
   }
   if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'v') {
+    interceptedKeyUps.add(event.code);
     term.scrollToBottom();
     navigator.clipboard.readText().then(text => window.retroTerminal.input(text));
+    event.preventDefault(); return;
+  }
+  if (mouseMode.win32Input) {
+    pressedKeys.add(event.code);
+    const locks = { num: event.getModifierState('NumLock'), scroll: event.getModifierState('ScrollLock'), caps: event.getModifierState('CapsLock'), pressed: pressedKeys };
+    term.scrollToBottom();
+    window.retroTerminal.input(win32KeySequence(event, true, locks));
     event.preventDefault(); return;
   }
   if (event.ctrlKey && event.key.toLowerCase() === 'c') {
@@ -744,6 +755,15 @@ window.addEventListener('keydown', event => {
     term.scrollToBottom();
     window.retroTerminal.input(event.key); event.preventDefault();
   }
+});
+
+window.addEventListener('keyup', event => {
+  if (interceptedKeyUps.delete(event.code)) { event.preventDefault(); return; }
+  if (!mouseMode.win32Input) return;
+  pressedKeys.delete(event.code);
+  const locks = { num: event.getModifierState('NumLock'), scroll: event.getModifierState('ScrollLock'), caps: event.getModifierState('CapsLock'), pressed: pressedKeys };
+  window.retroTerminal.input(win32KeySequence(event, false, locks));
+  event.preventDefault();
 });
 
 window.addEventListener('resize', resize);

@@ -1,11 +1,13 @@
 {
   "name": "rasterglow-terminal-windows",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
-  "description": "RasterGlow Terminal for Windows with ConPTY and real phosphor persistence",
+  "description": "RasterGlow Terminal for Windows with bundled OpenConsole, mouse input and real phosphor persistence",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "test:input": "node tools/input-protocol.test.cjs",
+    "test:windows-input": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/test-windows-input.ps1",
     "rebuild": "electron-rebuild -f -w node-pty",
     "dist:portable": "electron-builder --win portable"
   },
@@ -28,6 +30,7 @@
     "files": [
       "main.js",
       "renderer.js",
+      "input-protocol.js",
       "index.html",
       "style.css",
       "retro-profile.ps1",

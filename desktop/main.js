@@ -18,11 +18,12 @@ function createShell(cols, rows) {
         TERM: 'xterm-256color',
         COLORTERM: 'truecolor',
         TERM_PROGRAM: 'RasterGlowTerminal',
-        TERM_PROGRAM_VERSION: '1.0.0',
+        TERM_PROGRAM_VERSION: '1.0.2',
         COLUMNS: String(cols),
         LINES: String(rows)
       },
-      useConpty: true
+      useConpty: true,
+      useConptyDll: true
     }
   );
   shell.onData(data => {

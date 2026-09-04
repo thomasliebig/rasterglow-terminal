@@ -10,6 +10,10 @@ jobs:
         with: { node-version: 22, cache: npm, cache-dependency-path: desktop/package-lock.json }
       - run: npm ci
         working-directory: desktop
+      - run: npm run test:input
+        working-directory: desktop
+      - run: npm run test:windows-input
+        working-directory: desktop
       - run: npm run dist:portable
         working-directory: desktop
       - uses: softprops/action-gh-release@v2
